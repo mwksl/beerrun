@@ -34,6 +34,7 @@
 
 	function handleDistanceChange(e) {
 		distance = e.target.value;
+		handleFormSubmit(e)
 	}
 
 	async function handleFormSubmit(e) {
@@ -52,25 +53,27 @@
 		$: breweries;
 	}
 
-	// create an array of markers for the breweries where the format is [[lat, lng], [lat, lng]]
-	$: breweryMarkers = breweries
-		? breweries.map((brewery) => [brewery.latitude, brewery.longitude])
-		: null;
 </script>
 
-{#if position && breweryMarkers}
-	<p>Your location: {position.latitude}, {position.longitude}</p>
-	<form on:submit={handleFormSubmit}>
-		<label>Distance (miles)</label>
-		<input type="number" name="distance" value={distance} on:change={handleDistanceChange} />
-		<button type="submit">Find breweries</button>
+{#if position && breweries}
+	<form >
+		<label class="label">Distance (miles)</label>
+		<input type="range" min="1" max="5" value={distance} class="range" step="1" on:input={handleDistanceChange} />
+		<div class="w-full flex justify-between text-xs px-2">
+			<span>1</span>
+			<span>2</span>
+			<span>3</span>
+			<span>4</span>
+			<span>5</span>
+		</div>
 	</form>
 
 	{#each breweries as brewery}
 		<p>{brewery.name}</p>
 	{/each}
 
-	<MapBox initialView={[position.latitude, position.longitude]} bind:markerLocations={breweryMarkers} />
+	<!--	<MapBox initialView={[position.latitude, position.longitude]} bind:markerLocations={breweryMarkers} />-->
+	<MapBox center={[position.longitude, position.latitude]} bind:breweries />
 {:else}
 	<MapSkeleton />
 {/if}

@@ -1,195 +1,80 @@
-<script>
-	import L from 'leaflet';
-	import MapToolbar from './MapToolbar.svelte';
-	import MarkerPopup from './MarkerPopup.svelte';
-	import * as markerIcons from './markers.ts';
-	let map;
+<script lang="ts">
+	import { onMount, onDestroy } from 'svelte';
+	import MapboxDirections from '@mapbox/mapbox-gl-directions/dist/mapbox-gl-directions';
+	import mapboxgl, { LngLatLike, Marker } from 'mapbox-gl';
+	import { env } from '$env/dynamic/public';
 
-	export let initialView = [];
-	export let markerLocations = [];
+	export let center: LngLatLike = [0, 0];
+	export let breweries;
 
-	function createMap(container) {
-		let m = L.map(container, { preferCanvas: true }).setView(initialView, 100);
-		L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-			attribution: `&copy;<a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>,
-	        &copy;<a href="https://carto.com/attributions" target="_blank">CARTO</a>`,
-			subdomains: 'abcd',
-			maxZoom: 14
-		}).addTo(m);
+	console.log(breweries, 'breweries');
 
-		return m;
+	let mapElement: HTMLElement;
+	let map: mapboxgl.Map;
+	let accessToken = env.PUBLIC_MAPBOX_TOKEN;
+	let mapMarkers: Marker[] = [];
+
+	onMount(() => {
+		createMap();
+	});
+
+	onDestroy(() => {
+		map.remove();
+	});
+
+	function createMap() {
+		map = new mapboxgl.Map({
+			accessToken,
+			container: mapElement,
+			style: 'mapbox://styles/mapbox/streets-v11',
+			center,
+			zoom: 13
+		});
+
+		updateMarkers(breweries);
 	}
 
-	let eye = true;
-	let lines = true;
+	function updateMarkers(breweries) {
+		// Remove existing markers
+		mapMarkers.forEach((marker) => marker.remove());
+		mapMarkers = [];
 
-	let toolbar = L.control({ position: 'topright' });
-	let toolbarComponent;
-	toolbar.onAdd = (map) => {
-		let div = L.DomUtil.create('div');
-		toolbarComponent = new MapToolbar({
-			target: div,
-			props: {}
-		});
+		// Add new markers
+		breweries.forEach((brewery) => {
+			const newMarker = new Marker().setLngLat([brewery?.longitude, brewery?.latitude]).addTo(map);
 
-		toolbarComponent.$on('click-eye', ({ detail }) => (eye = detail));
-		toolbarComponent.$on('click-lines', ({ detail }) => (lines = detail));
-		toolbarComponent.$on('click-reset', () => {
-			map.setView(initialView, 5, { animate: true });
-		});
+			// Create popup
+			const popup = new mapboxgl.Popup().setHTML(`<p> ${brewery?.name} </p>`);
+			newMarker.setPopup(popup);
 
-		return div;
-	};
+			newMarker.on('click', () => {
+				const origin = newMarker.getLngLat().toArray();
 
-	toolbar.onRemove = () => {
-		if (toolbarComponent) {
-			toolbarComponent.$destroy();
-			toolbarComponent = null;
-		}
-	};
+				// Find the closest marker to the origin
+				const closestMarker = mapMarkers.reduce(
+					(closest, marker) => {
+						const distance = mapboxgl.LngLat.distance(origin, marker.getLngLat().toArray());
+						return distance < closest.distance ? { marker, distance } : closest;
+					},
+					{ marker: null, distance: Infinity }
+				).marker;
 
-	// Create a popup with a Svelte component inside it and handle removal when the popup is torn down.
-	// `createFn` will be called whenever the popup is being created, and should create and return the component.
-	function bindPopup(marker, createFn) {
-		let popupComponent;
-		marker.bindPopup(() => {
-			let container = L.DomUtil.create('div');
-			popupComponent = createFn(container);
-			return container;
-		});
+				const destination = closestMarker.getLngLat().toArray();
 
-		marker.on('popupclose', () => {
-			if (popupComponent) {
-				let old = popupComponent;
-				popupComponent = null;
-				// Wait to destroy until after the fadeout completes.
-				setTimeout(() => {
-					old.$destroy();
-				}, 500);
-			}
-		});
-	}
+				// Set the origin and destination for the directions
+				directions.setOrigin(origin);
+				directions.setDestination(destination);
 
-	let markers = new Map();
-
-	function markerIcon(count) {
-		let html = `<div class="map-marker"><div>${markerIcons.library}</div><div class="marker-text">${count}</div></div>`;
-		return L.divIcon({
-			html,
-			className: 'map-marker'
-		});
-	}
-
-	function createMarker(loc) {
-		let count = Math.ceil(Math.random() * 25);
-		let icon = markerIcon(count);
-		let marker = L.marker(loc, { icon });
-		bindPopup(marker, (m) => {
-			let c = new MarkerPopup({
-				target: m,
-				props: {
-					count
-				}
+				// Get the walking directions
+				directions.query();
 			});
 
-			c.$on('change', ({ detail }) => {
-				count = detail;
-				marker.setIcon(markerIcon(count));
-			});
-
-			return c;
+			mapMarkers.push(newMarker);
 		});
-
-		return marker;
 	}
 
-	function createLines() {
-		return L.polyline(markerLocations, { color: '#E4E', opacity: 0.5 });
-	}
-
-	let markerLayers;
-	let lineLayers;
-	function mapAction(container) {
-		if (!markerLocations) return; // If markerLocations is null or undefined, do not render
-
-		map = createMap(container);
-		toolbar.addTo(map);
-
-		if (markerLocations.length > 0) {
-			// Only create marker layers and lines if there are marker locations
-			markerLayers = L.layerGroup();
-			for (let location of markerLocations) {
-				let m = createMarker(location);
-				markerLayers.addLayer(m);
-			}
-
-			lineLayers = createLines();
-
-			markerLayers.addTo(map);
-			lineLayers.addTo(map);
-		}
-
-		return {
-			destroy: () => {
-				toolbar.remove();
-				map.remove();
-				map = null;
-			}
-		};
-	}
-
-	$: if (markerLayers && markerLocations && map) {
-		// Remove old marker layers from map
-		markerLayers && markerLayers.remove();
-
-		// Recreate marker layers
-		markerLayers = L.layerGroup();
-		for (let location of markerLocations) {
-			let m = createMarker(location);
-			markerLayers.addLayer(m);
-		}
-
-		// Add new marker layers to map
-		markerLayers.addTo(map);
-	}
-
-	$: if (lineLayers && map) {
-		if (lines) {
-			lineLayers.addTo(map);
-		} else {
-			lineLayers.remove();
-		}
-	}
-
-	function resizeMap() {
-		if (map) {
-			map.invalidateSize();
-		}
-	}
+	// This is called when the markers prop changes
+	$: updateMarkers(breweries);
 </script>
 
-<svelte:window on:resize={resizeMap} />
-
-<link
-	rel="stylesheet"
-	href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"
-	integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
-	crossorigin=""
-/>
-<div class="map" style="height:100%;width:100%" use:mapAction />
-
-<style>
-	.map :global(.marker-text) {
-		width: 100%;
-		text-align: center;
-		font-weight: 600;
-		background-color: #444;
-		color: #eee;
-		border-radius: 0.5rem;
-	}
-
-	.map :global(.map-marker) {
-		width: 30px;
-		transform: translateX(-50%) translateY(-25%);
-	}
-</style>
+<div class="w-full h-full" bind:this={mapElement} />
