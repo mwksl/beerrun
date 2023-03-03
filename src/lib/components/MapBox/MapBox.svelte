@@ -1,13 +1,11 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
-	import MapboxDirections from '@mapbox/mapbox-gl-directions/dist/mapbox-gl-directions';
+  import MapboxDirections from '@mapbox/mapbox-gl-directions/dist/mapbox-gl-directions';
 	import mapboxgl, { LngLatLike, Marker } from 'mapbox-gl';
-	import { env } from '$env/dynamic/public';
+  import { env } from '$env/dynamic/public';
 
 	export let center: LngLatLike = [0, 0];
-	export let breweries;
-
-	console.log(breweries, 'breweries');
+  export let breweries;
 
 	let mapElement: HTMLElement;
 	let map: mapboxgl.Map;
@@ -47,34 +45,14 @@
 			const popup = new mapboxgl.Popup().setHTML(`<p> ${brewery?.name} </p>`);
 			newMarker.setPopup(popup);
 
-			newMarker.on('click', () => {
-				const origin = newMarker.getLngLat().toArray();
-
-				// Find the closest marker to the origin
-				const closestMarker = mapMarkers.reduce(
-					(closest, marker) => {
-						const distance = mapboxgl.LngLat.distance(origin, marker.getLngLat().toArray());
-						return distance < closest.distance ? { marker, distance } : closest;
-					},
-					{ marker: null, distance: Infinity }
-				).marker;
-
-				const destination = closestMarker.getLngLat().toArray();
-
-				// Set the origin and destination for the directions
-				directions.setOrigin(origin);
-				directions.setDestination(destination);
-
-				// Get the walking directions
-				directions.query();
-			});
-
 			mapMarkers.push(newMarker);
 		});
 	}
 
 	// This is called when the markers prop changes
 	$: updateMarkers(breweries);
+
+
 </script>
 
-<div class="w-full h-full" bind:this={mapElement} />
+<div class="h-1/2 w-full" bind:this={mapElement}></div>
