@@ -52,6 +52,8 @@
 	// This is called when the markers prop changes
 	$: updateMarkers(breweries);
 
+  $: center && map && map.setCenter(center);
+
 
 </script>
 

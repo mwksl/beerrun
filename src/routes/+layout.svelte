@@ -19,8 +19,8 @@
 	});
 </script>
 
-<div class="h-screen w-screen">
-	<div class="container mx-auto h-full w-full sm:px-2">
+<div class="h-screen w-screen font-mono">
+	<div class="container mx-auto h-full w-full">
 		<Navbar session={$page.data.session} />
 
 		<slot />
