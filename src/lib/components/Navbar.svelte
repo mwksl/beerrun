@@ -28,11 +28,7 @@
 				<label tabindex="0" class="btn btn-ghost btn-circle avatar">
 					<div class="w-10 rounded-full">
 						<!-- add a random cat photo -->
-						<img
-							src="https://placekitten.com/200/200"
-							alt="avatar"
-							class="rounded-full"
-						/>
+						<img src="https://placekitten.com/200/200" alt="avatar" class="rounded-full" />
 					</div>
 				</label>
 				<ul
@@ -52,7 +48,8 @@
 				</ul>
 			</div>
 		{:else}
-			<a href="/login" class="btn btn-ghost">Login</a>
+			<!-- @TODO: add a login button -->
+			<!--<a href="/login" class="btn btn-ghost">Login</a>-->
 		{/if}
 	</div>
 </div>
