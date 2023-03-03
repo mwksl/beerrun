@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
-  import MapboxDirections from '@mapbox/mapbox-gl-directions/dist/mapbox-gl-directions';
+	import MapboxDirections from '@mapbox/mapbox-gl-directions/dist/mapbox-gl-directions';
 	import mapboxgl, { LngLatLike, Marker } from 'mapbox-gl';
-  import { env } from '$env/dynamic/public';
+	import { env } from '$env/dynamic/public';
 
 	export let center: LngLatLike = [0, 0];
-  export let breweries;
+	export let breweries;
 
 	let mapElement: HTMLElement;
 	let map: mapboxgl.Map;
@@ -26,13 +26,14 @@
 			container: mapElement,
 			style: 'mapbox://styles/mapbox/streets-v11',
 			center,
-			zoom: 13
+			zoom: 12
 		});
 
 		updateMarkers(breweries);
 	}
 
 	function updateMarkers(breweries) {
+		if (!breweries) return;
 		// Remove existing markers
 		mapMarkers.forEach((marker) => marker.remove());
 		mapMarkers = [];
@@ -52,9 +53,7 @@
 	// This is called when the markers prop changes
 	$: updateMarkers(breweries);
 
-  $: center && map && map.setCenter(center);
-
-
+	$: center && map && map.setCenter(center);
 </script>
 
-<div class="h-1/2 w-full" bind:this={mapElement}></div>
+<div class="h-1/2 w-full" bind:this={mapElement} />
