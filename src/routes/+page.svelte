@@ -26,19 +26,20 @@
 
 	async function requestBreweries() {
 		try {
-			breweries = await findBreweriesWithinXMiles({
+			const newBreweries = await findBreweriesWithinXMiles({
 				userLat: position.latitude,
 				userLng: position.longitude,
 				x: distance
 			});
-			clusteredBreweries = groupBreweriesByFootrace({
-				userLat: position.latitude,
-				userLng: position.longitude,
-				breweries
-			});
+
+			if (newBreweries.length === 0) {
+				breweries = [];
+			} else {
+				breweries = newBreweries;
+			}
 		} catch (error) {
 			console.error(error);
-			breweries = null;
+			breweries = [];
 		}
 	}
 
@@ -65,6 +66,7 @@
 
 	async function handleSearch(e) {
 		if (e.detail) {
+			console.log(e.detail);
 			address = e.detail;
 			position = await geocodeAddress(address);
 		} else {
@@ -76,9 +78,13 @@
 
 	onMount(requestBreweries);
 
-	$: position;
-	$: breweries;
-	$: clusteredBreweries = breweries
+	$: if (address) {
+		requestBreweries();
+		document.title = `Brewery runs near ${address} | Beer Run`;
+	} else {
+		document.title = `Brewery runs near you | Beer Run`;
+	}
+	$: clusteredBreweries = breweries && breweries.length > 0
 		? groupBreweriesByFootrace({
 				userLat: position.latitude,
 				userLng: position.longitude,

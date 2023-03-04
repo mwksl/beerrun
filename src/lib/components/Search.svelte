@@ -14,20 +14,29 @@
 	});
 
 	async function search(query) {
-		const apiKey = env.PUBLIC_MAPBOX_TOKEN;
-		const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
-			query
-		)}.json?access_token=${apiKey}&autocomplete=true&limit=10&country=us`;
-		const response = await fetch(url);
-		const data = await response.json();
-		addressData = data.features.map((feature) => {
-			return {
-				name: feature.place_name,
-				latitude: feature.center[1],
-				longitude: feature.center[0],
-				href: `/${encodeURIComponent(feature.place_name)}`
-			};
-		});
+		try {
+			const apiKey = env.PUBLIC_MAPBOX_TOKEN;
+			const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
+				query
+			)}.json?access_token=${apiKey}&autocomplete=true&limit=10&country=us`;
+			const response = await fetch(url);
+			if (!response.ok) {
+				throw new Error(`An error occurred: ${response.status}`);
+			}
+			const data = await response.json();
+			addressData = data.features.map((feature) => {
+				return {
+					name: feature.place_name,
+					latitude: feature.center[1],
+					longitude: feature.center[0],
+					href: `/${encodeURIComponent(feature.place_name)}`
+				};
+			});
+			return addressData;
+		} catch (error) {
+			console.error(error);
+			return null;
+		}
 	}
 
 	function handleKeydown(e) {

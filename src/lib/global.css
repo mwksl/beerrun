@@ -28,7 +28,6 @@
 [data-svelte-typeahead] .svelte-typeahead-list {
 	transform: translateY(0.5em);
 	background: hsl(var(--b1));
-	/*border-radius: var(--rounded-btn);*/
 	overflow: hidden;
 }
 [data-svelte-typeahead] .svelte-typeahead-list .selected,
