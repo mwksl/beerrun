@@ -7,28 +7,33 @@ export async function findBreweriesWithinXMiles({
 	userLng: number;
 	x: number;
 }) {
-	// Step 2: Find all breweries within x miles of the user's location
-	const response = await fetch(
-		`https://api.openbrewerydb.org/breweries?by_dist=${userLat},${userLng}&per_page=50`
-	);
-
-	if (!response.ok) {
-		throw new Error(`HTTP error! status: ${response.status}`);
-	}
-
-	const breweries = await response.json();
-
-	// Step 3: Calculate the distance between the user and each brewery
-	return breweries.filter((brewery: any) => {
-		const distance = getDistanceFromLatLonInMiles(
-			userLat,
-			userLng,
-			brewery.latitude,
-			brewery.longitude
+	try {
+		// Step 1: Find all breweries within x miles of the user's location
+		const response = await fetch(
+			`https://api.openbrewerydb.org/breweries?by_dist=${userLat},${userLng}&per_page=50`
 		);
 
-		return distance <= x;
-	});
+		if (!response.ok) {
+			throw new Error(`HTTP error! status: ${response.status}`);
+		}
+
+		const breweries = await response.json();
+
+		// Step 2: Calculate the distance between the user and each brewery
+		return breweries.filter((brewery: any) => {
+			const distance = getDistanceFromLatLonInMiles(
+				userLat,
+				userLng,
+				brewery.latitude,
+				brewery.longitude
+			);
+
+			return distance <= x;
+		});
+	} catch (error) {
+		console.error(error);
+		throw new Error('Unable to fetch breweries');
+	}
 }
 
 export function groupBreweriesByFootrace({
