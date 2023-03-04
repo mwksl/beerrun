@@ -78,10 +78,17 @@
 
 	$: position;
 	$: breweries;
+	$: clusteredBreweries = breweries
+		? groupBreweriesByFootrace({
+				userLat: position.latitude,
+				userLng: position.longitude,
+				breweries
+		  })
+		: null;
 </script>
 
 <div class="flex flex-1 md:gap-1 lg:gap-2">
-	<div class="hidden w-full lg:flex mb-2">
+	<div class="w-full lg:flex mb-2">
 		<Search on:search={handleSearch} />
 	</div>
 </div>

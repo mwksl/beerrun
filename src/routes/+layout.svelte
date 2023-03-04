@@ -20,7 +20,7 @@
 </script>
 
 <div class="h-screen w-screen font-mono">
-	<div class="container mx-auto h-full w-full">
+	<div class="container mx-auto h-full w-full px-4">
 		<Navbar session={$page.data.session} />
 
 		<slot />
