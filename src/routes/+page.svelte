@@ -84,13 +84,14 @@
 	} else {
 		document.title = `Brewery runs near you | Beer Run`;
 	}
-	$: clusteredBreweries = breweries && breweries.length > 0
-		? groupBreweriesByFootrace({
-				userLat: position.latitude,
-				userLng: position.longitude,
-				breweries
-		  })
-		: null;
+	$: clusteredBreweries =
+		breweries && breweries.length > 0
+			? groupBreweriesByFootrace({
+					userLat: position.latitude,
+					userLng: position.longitude,
+					breweries
+			  })
+			: null;
 </script>
 
 <div class="flex flex-1 md:gap-1 lg:gap-2">
@@ -121,10 +122,10 @@
 	</form>
 </div>
 
-<div class="flex justify-evenly my-4">
+<div class="flex justify-evenly my-4 flex-col md:flex-row">
 	{#if clusteredBreweries}
 		{#each Object.entries(clusteredBreweries) as [race, breweries]}
-			<div class="flex flex-col w-1/2">
+			<div class="flex flex-col w-full md:w-1/2">
 				<h2 class="card-title">{race}</h2>
 				{#each breweries as brewery}
 					<li>{brewery.name}</li>
