@@ -7,6 +7,8 @@
 	import { env } from '$env/dynamic/public';
 	import Search from '$lib/components/Search.svelte';
 	import { onMount } from 'svelte';
+	import Toggle from '$lib/components/Toggle.svelte';
+	import BarCrawlRoute from "$lib/components/BarCrawlRoute.svelte";
 
 	let position = { latitude: 39.7392, longitude: -104.9903 };
 	let distance = 1;
@@ -15,6 +17,7 @@
 	let breweryMarkers = [];
 	let address = null;
 	let runningRoute = null;
+	let barCrawl = false;
 
 	function reset() {
 		breweries = null;
@@ -93,11 +96,17 @@
 					breweries
 			  })
 			: null;
+	$: if (barCrawl) {
+		requestBreweries();
+	}
 </script>
 
-<div class="flex flex-1 md:gap-1 lg:gap-2">
+<div class="flex flex-1 flex-col md:gap-1 lg:gap-2">
 	<div class="w-full lg:flex mb-2">
 		<Search on:search={handleSearch} />
+	</div>
+	<div class="mb-2">
+		<Toggle bind:barCrawl />
 	</div>
 </div>
 
@@ -125,15 +134,24 @@
 
 <div class="flex justify-evenly my-4 flex-col md:flex-row">
 	{#if clusteredBreweries}
-		{#each Object.entries(clusteredBreweries) as [race, breweries]}
-			<div class="flex flex-col w-full md:w-1/2">
-				<h2 class="card-title">{race}</h2>
-				{#each breweries as brewery}
-					<li>{brewery.name}</li>
-				{/each}
-			</div>
-		{/each}
+		{#if !barCrawl}
+			{#each Object.entries(clusteredBreweries) as [race, breweries]}
+				<div class="flex flex-col w-full md:w-1/2">
+					<h2 class="card-title">{race}</h2>
+					{#each breweries as brewery}
+						<li>{brewery.name}</li>
+					{/each}
+				</div>
+			{/each}
+		{:else}
+			<BarCrawlRoute clusteredBreweries={clusteredBreweries['5k']} />
+		{/if}
 	{/if}
 </div>
 
-<MapBox center={[position.longitude, position.latitude]} bind:breweries bind:clusteredBreweries />
+<MapBox
+	center={[position.longitude, position.latitude]}
+	bind:breweries
+	bind:clusteredBreweries
+	bind:barCrawl
+/>
