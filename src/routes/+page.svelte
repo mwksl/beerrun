@@ -14,6 +14,7 @@
 	let clusteredBreweries = null;
 	let breweryMarkers = [];
 	let address = null;
+	let runningRoute = null;
 
 	function reset() {
 		breweries = null;
@@ -135,4 +136,4 @@
 	{/if}
 </div>
 
-<MapBox center={[position.longitude, position.latitude]} bind:breweries />
+<MapBox center={[position.longitude, position.latitude]} bind:breweries bind:clusteredBreweries />
