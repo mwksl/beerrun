@@ -26,7 +26,7 @@
 			container: mapElement,
 			style: 'mapbox://styles/mapbox/streets-v11',
 			center,
-			zoom: 12
+			zoom: 13
 		});
 
 		updateMarkers(breweries);
